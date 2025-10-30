@@ -1,0 +1,1232 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>কখনোখরচ - Offline Expense Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ---------- Glassy / Blurry Theme (design-only changes) ---------- */
+    /* Theme variables: .theme-light and .theme-dark override the same variable names */
+    .theme-dark{
+      --bg-1: #0f172a; /* dark navy */
+      --glass-1: rgba(255,255,255,0.06);
+      --glass-2: rgba(255,255,255,0.04);
+      --accent: rgba(109, 40, 217, 0.9);
+      --muted: rgba(255,255,255,0.7);
+      --glass-border: rgba(255,255,255,0.08);
+      --card-bg: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.02));
+      --text-main: #e6eef8;
+      --muted-2: rgba(230,238,255,0.68);
+    }
+
+    .theme-light{
+      --bg-1: #f5f7fb; /* light background */
+      --glass-1: rgba(255,255,255,0.85);
+      --glass-2: rgba(255,255,255,0.9);
+      --accent: rgba(99,102,241,0.95);
+      --muted: rgba(33,37,41,0.7);
+      --glass-border: rgba(16,24,40,0.06);
+      --card-bg: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,250,252,0.96));
+      --text-main: #0b1220;
+      --muted-2: rgba(11,18,32,0.6);
+    }
+
+    html,body{height:100%;}
+    body{
+      margin:0; padding:32px; min-height:100vh; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      color: var(--text-main); background: radial-gradient(1200px 400px at 10% 10%, rgba(99,102,241,0.12), transparent), radial-gradient(900px 300px at 90% 90%, rgba(16,185,129,0.06), transparent), var(--bg-1);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; overflow-y:auto;
+      background-attachment: fixed;
+    }
+
+    /* decorative blurred blobs */
+    body::before, body::after{
+      content:''; position:fixed; z-index:0; pointer-events:none; filter:blur(80px); opacity:0.55;
+    }
+    body::before{ width:540px; height:420px; left:-120px; top:-60px; background:linear-gradient(120deg, rgba(99,102,241,0.22), rgba(139,92,246,0.14)); border-radius:50%; }
+    body::after{ width:640px; height:540px; right:-160px; bottom:-120px; background:linear-gradient(120deg, rgba(16,185,129,0.16), rgba(34,197,94,0.08)); border-radius:50%; }
+
+    /* main container sits above decorative blobs */
+    .container{ position:relative; z-index:1; max-width:1100px; }
+
+    /* glass sheet that holds the app */
+    .container > .d-flex:first-child{ margin-bottom:6px; }
+  .container{ padding:28px; border-radius:16px; background: var(--card-bg); box-shadow: 0 6px 30px rgba(2,6,23,0.12); border: 1px solid var(--glass-border); backdrop-filter: blur(8px) saturate(1.05); }
+
+  h3{ font-weight:600; color:var(--text-main); letter-spacing:0.2px; }
+
+  /* Cards adopt frosted glass look */
+  .card{ background: var(--card-bg); border-radius:14px; border: 1px solid var(--glass-border); box-shadow: 0 6px 18px rgba(2,6,23,0.08); color:var(--muted); }
+  .card p, .card label, .card h5, .card h6 { color: var(--text-main); }
+
+    /* Input styles */
+    input.form-control, select.form-control, textarea.form-control{
+      background: rgba(255,255,255,0.02); border:1px solid rgba(0,0,0,0.06); color: var(--text-main);
+      backdrop-filter: blur(6px);
+    }
+    input.form-control::placeholder{ color: rgba(11,18,32,0.35); }
+
+    /* Buttons updated with subtle gradients */
+    .btn{
+      border-radius:10px; font-weight:600; box-shadow:none; border:1px solid rgba(255,255,255,0.04);
+    }
+    .btn-primary{ background: linear-gradient(90deg, rgba(99,102,241,0.95), rgba(124,58,237,0.95)); border:none; color:white; }
+    .btn-outline-primary{ color:rgba(230,238,255,0.95); border:1px solid rgba(255,255,255,0.06); background:transparent; }
+    .btn-outline-secondary{ color:rgba(230,238,255,0.85); border:1px solid rgba(255,255,255,0.04); background:transparent; }
+    .btn-success{ background: linear-gradient(90deg, rgba(16,185,129,0.92), rgba(34,197,94,0.92)); border:none; color:white }
+    .btn-danger, .btn-outline-danger{ background:linear-gradient(90deg, rgba(220,38,38,0.9), rgba(185,28,28,0.9)); color:white; border:none; }
+
+    /* Nav tabs (glass style) */
+  .nav-tabs .nav-link{ border:none; color:var(--muted-2); background:transparent; padding:10px 14px; border-radius:10px; }
+  .nav-tabs .nav-link.active{ background: linear-gradient(90deg, rgba(99,102,241,0.12), rgba(124,58,237,0.08)); color:var(--text-main); box-shadow: inset 0 -2px 0 rgba(255,255,255,0.02); }
+
+    /* Day grouping */
+    .day-group .day-header { display:flex; justify-content:space-between; align-items:center; gap:12px }
+  .day-group .day-header .date-title { font-weight:700; color: var(--text-main) }
+    .day-group .day-items { transition:height .18s ease, opacity .12s ease }
+    .toggle-day.collapsed { opacity:0.85 }
+
+    .card-exp{ cursor: grab; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; }
+
+  .small-muted{ color: var(--muted-2); font-size:0.9rem }
+    .export-btn{ white-space:nowrap }
+
+    /* Modal shared styles */
+    .modal-content{ 
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); 
+      border: 1px solid rgba(255,255,255,0.08); 
+      backdrop-filter: blur(10px); 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+      color: #eef6ff;
+      border-radius: 16px;
+    }
+    .modal-header {
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 1rem 1.5rem;
+    }
+    .modal-header.header-danger {
+      background: linear-gradient(90deg, rgba(220,38,38,0.9), rgba(185,28,28,0.9));
+    }
+    .modal-header.header-success {
+      background: linear-gradient(90deg, rgba(16,185,129,0.92), rgba(34,197,94,0.92));
+    }
+    .modal-header.header-primary {
+      background: linear-gradient(90deg, rgba(99,102,241,0.92), rgba(124,58,237,0.92));
+    }
+    .modal-body {
+      padding: 1.5rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    }
+    .modal-footer {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.1);
+      padding: 1rem 1.5rem;
+      gap: 0.5rem;
+    }
+    .modal .btn-close-white {
+      filter: drop-shadow(0 0 1px rgba(0,0,0,0.3));
+    }
+    .modal input.form-control {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    .modal .form-text {
+      color: rgba(255,255,255,0.6);
+    }
+    .modal code {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+    }
+
+    /* Lock overlay styles */
+    .lock-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(11,18,32,0.6); z-index:9999; }
+    .lock-panel{ width:320px; max-width:90%; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.06); backdrop-filter: blur(8px); }
+    .lock-panel h5{ margin:0; color:var(--text-main); }
+    #lockInput{ font-size:1rem; }
+  /* Ensure Bootstrap modals (notifications) appear above the lock overlay */
+  .modal-backdrop { z-index: 10990 !important; }
+  .modal { z-index: 11000 !important; }
+
+    /* responsive tweaks */
+    @media (max-width: 992px) {
+      .controls-row .col-sm-4 { width:100%; }
+      #stats .card { overflow-x:auto; }
+      .container{ padding:18px; }
+    }
+    @media (min-width: 993px) {
+      .controls-row .col-sm-4 { flex:1; min-width:30%; }
+    }
+
+  </style>
+</head>
+<body class="theme-light">
+  <!-- Lock overlay: blocks UI until correct password entered -->
+  <div id="lockOverlay" class="lock-overlay" aria-hidden="true">
+    <div class="lock-panel card p-4 text-center">
+      <h5 class="mb-2">Protected</h5>
+      <div class="mb-3">
+        <input id="lockInput" type="password" class="form-control" placeholder="Enter password">
+      </div>
+      <div class="d-flex justify-content-center gap-2">
+        <button id="unlockBtn" class="btn btn-primary">Unlock</button>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+      <h3 class="mb-2">প্রতিদিনের খরচ হিসাব (Offline)</h3>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-secondary" id="importBtn">Import</button>
+        <button class="btn btn-success" id="exportAllBtn">Export ZIP</button>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-lg-5">
+        <div class="card p-3">
+          <h5 class="mb-3">নতুন খরচ যোগ করুন</h5>
+          <form id="expenseForm">
+            <div class="mb-2">
+              <label class="form-label">তারিখ</label>
+              <input type="date" id="dateInput" class="form-control" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">বর্গ (Category)</label>
+              <input type="text" id="categoryInput" class="form-control" placeholder="Food, Transport" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">টাকার পরিমাণ</label>
+              <input type="number" step="0.01" id="amountInput" class="form-control" placeholder="Amount" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">নোট (Optional)</label>
+              <input type="text" id="noteInput" class="form-control" placeholder="small note">
+            </div>
+            <div class="d-grid">
+              <button class="btn btn-primary" type="submit">যোগ করুন</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card mt-3 p-3">
+          <h6>Import Files</h6>
+          <p class="small-muted">CSV, XLSX, JSON ফাইল ইনপুট হিসেবে দিলে ডেটা মিশে যাবে। (PDF ইনপোর্ট সমর্থিত নয়)</p>
+          <input type="file" id="importFile" class="form-control">
+        </div>
+
+        <div class="card mt-3 p-3">
+          <h6>Export</h6>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-primary export-btn" id="exportCsv">Export CSV</button>
+            <button class="btn btn-outline-primary export-btn" id="exportXlsx">Export XLSX</button>
+            <button class="btn btn-outline-primary export-btn" id="exportJson">Export JSON</button>
+            <button class="btn btn-outline-primary export-btn" id="exportPdf">Export PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button">List</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">Stats</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button">Settings</button>
+          </li>
+        </ul>
+
+        <div class="tab-content mt-3">
+          <div class="tab-pane fade show active" id="list">
+            <div id="cardsContainer" class="row g-3"></div>
+          </div>
+
+          <div class="tab-pane fade" id="settings">
+            <div class="card p-3">
+              <h5>Display Settings</h5>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="swapCategoryNote">
+                <label class="form-check-label" for="swapCategoryNote">
+                  Swap Category and Note display
+                </label>
+              </div>
+                  <div class="form-check form-switch mt-3">
+                    <input class="form-check-input" type="checkbox" id="themeToggle">
+                    <label class="form-check-label" for="themeToggle">Enable dark theme</label>
+                  </div>
+                  <div class="text-muted small mt-2">Default: Light theme. Toggle to switch between Light / Dark UI.</div>
+              <div class="text-muted small mt-2">
+                When enabled, Note will be shown as the main text and Category as the subtitle
+              </div>
+            </div>
+
+            <div class="card p-3 mt-3">
+              <h5>App Data</h5>
+              <p class="small-muted">This will clear all locally stored app data (expenses, stats, and settings). This action is permanent for this browser.</p>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-danger" id="clearAppBtn">Clear app data</button>
+                <button class="btn btn-secondary" id="exportBeforeClear">Export before clearing</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="stats">
+            <div class="card p-3">
+              <div class="row controls-row gx-3 gy-2 flex-wrap">
+                <div class="col-sm-4">
+                  <label class="form-label">Quick: Last 7 days</label>
+                  <button class="btn btn-outline-secondary w-100" id="last7">Last 7</button>
+                </div>
+                <div class="col-sm-4">
+                  <label class="form-label">Select month</label>
+                  <input type="month" id="monthPicker" class="form-control">
+                </div>
+                <div class="col-sm-4">
+                  <label class="form-label">Custom range (click to pick)</label>
+                  <input type="text" id="rangeInput" class="form-control" readonly placeholder="Click to choose range">
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <button class="btn btn-primary me-2" id="applyRange">Apply</button>
+                <button class="btn btn-outline-secondary" id="resetRange">Reset</button>
+              </div>
+
+              <div class="mt-3" id="statsResult">
+                <h5>Summary</h5>
+                <p class="lead" id="totalAmount">Total: ৳0</p>
+                <div id="byCategory"></div>
+                <canvas id="statsChart" style="max-height:260px"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center small-muted mt-4">Data stored locally (localStorage)। ডেটা ব্রাউজারে থাকে — সার্ভার নেই।</div>
+  </div>
+
+  <!-- Delete confirmation modal with password -->
+  <div class="modal fade del-modal" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm delete</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>এই আইটেমটি স্থায়ীভাবে মুছে যাবে। চালিয়ে যেতে পাসওয়ার্ড দিন (type <strong>123</strong> then Confirm)</p>
+          <input type="password" id="delPassword" class="form-control" placeholder="Enter password to confirm">
+          <div class="form-text mt-2">আপনি নিশ্চিত হলে Confirm চাপুন, না হলে Cancel।</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-confirm" id="confirmDeleteBtn">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear app data confirmation modal -->
+  <div class="modal fade" id="clearModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header header-danger">
+          <h5 class="modal-title text-white">Clear All App Data</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex align-items-start gap-3">
+            <div class="rounded-circle bg-danger bg-opacity-10 p-2 mt-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash3 text-danger" viewBox="0 0 16 16">
+                <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="mb-3">This will permanently remove all locally stored data including expenses, saved stats and app settings in this browser. This action cannot be undone.</p>
+              <div class="bg-danger bg-opacity-10 p-3 rounded-3 mb-3">
+                <p class="mb-2 fw-semibold">Type <code>CLEAR</code> below to confirm.</p>
+                <input type="text" id="clearConfirmInput" class="form-control" placeholder="Type CLEAR to confirm">
+                <div class="form-text mt-2">💡 Tip: Click Export before clearing to create a backup.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmClearBtn" disabled>Clear Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success modal shown after clearing app data -->
+  <div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header header-success">
+          <h5 class="modal-title text-white">Success</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex align-items-start gap-3">
+            <div class="rounded-circle bg-success bg-opacity-10 p-2 mt-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-check-circle-fill text-success" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="mb-0" id="successModalMsg">App data cleared. The app has been reset.</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0">
+          <button type="button" class="btn btn-sm btn-success" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import success modal -->
+  <div class="modal fade" id="importSuccessModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(90deg, rgba(16,185,129,0.92), rgba(34,197,94,0.92));">
+          <h5 class="modal-title text-white">Import Successful</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="rounded-circle bg-success bg-opacity-10 p-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill text-success" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="mb-0 h6" id="importSuccessMsg"></p>
+              <small class="text-muted">Your data has been imported and merged</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0">
+          <button type="button" class="btn btn-sm btn-success" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification modal for alerts -->
+  <div class="modal fade" id="notifyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-white">Notice</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex align-items-start gap-3">
+            <div class="rounded-circle p-2 mt-1" id="notifyIconWrap">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi" id="notifyIcon" viewBox="0 0 16 16">
+                <!-- Icon will be set dynamically -->
+              </svg>
+            </div>
+            <div>
+              <p class="mb-0" id="notifyMessage"></p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0">
+          <button type="button" class="btn btn-sm" id="notifyBtn" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Range picker modal -->
+  <div class="modal fade" id="rangeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header header-primary">
+          <h5 class="modal-title text-white">Select Date Range</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex align-items-start gap-3">
+            <div class="rounded-circle bg-primary bg-opacity-10 p-2 mt-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-calendar-range text-primary" viewBox="0 0 16 16">
+                <path d="M9 7a1 1 0 0 1 1-1h5v2h-5a1 1 0 0 1-1-1zM1 9h4a1 1 0 0 1 0 2H1V9z"/>
+                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+              </svg>
+            </div>
+            <div class="flex-grow-1">
+              <div class="mb-3">
+                <label class="form-label">From</label>
+                <input type="date" id="modalFrom" class="form-control">
+              </div>
+              <div>
+                <label class="form-label">To</label>
+                <input type="date" id="modalTo" class="form-control">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveRangeBtn">Apply Range</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    // Offline expense tracker with improvements per user request
+    // --- App lock logic (client-side, obfuscated password) ---
+    (function(){
+      // encoded password: original is hidden via simple XOR obfuscation
+      const _enc = 'Xdijd'; // obfuscated chars
+      const _k = [12,5,7,3,9];
+      function _reconstruct(){
+        try{
+          return _enc.split('').map((c,i)=>String.fromCharCode(c.charCodeAt(0) ^ _k[i])).join('');
+        }catch(e){return ''}
+      }
+
+      const LOCK_KEY = 'app_unlocked_v1';
+      const overlay = document.getElementById('lockOverlay');
+      const input = document.getElementById('lockInput');
+      const btn = document.getElementById('unlockBtn');
+
+      function lockShow(){ overlay.setAttribute('aria-hidden','false'); overlay.style.display='flex'; document.documentElement.style.overflow='hidden'; }
+      function lockHide(){ overlay.setAttribute('aria-hidden','true'); overlay.style.display='none'; document.documentElement.style.overflow=''; }
+
+      const unlocked = localStorage.getItem(LOCK_KEY) === '1';
+      if(!unlocked){ lockShow(); if(input) setTimeout(()=>input.focus(),200); }
+
+      function tryUnlock(){ const val = (input && input.value || ''); const secret = _reconstruct(); if(val === secret){ localStorage.setItem(LOCK_KEY,'1'); lockHide(); try{ showNotify('Unlocked','success'); }catch(e){} } else { try{ showNotify('Incorrect password','error'); }catch(e){} if(input) input.value=''; if(input) input.focus(); }}
+
+      if(btn) btn.addEventListener('click', tryUnlock);
+      if(input) input.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter') tryUnlock(); });
+    })();
+    const STORAGE_KEY = 'expenses_v2';
+    const STATS_KEY = 'last_stats_v2';
+
+    // Elements
+    const expenseForm = document.getElementById('expenseForm');
+    const dateInput = document.getElementById('dateInput');
+    const categoryInput = document.getElementById('categoryInput');
+    const amountInput = document.getElementById('amountInput');
+    const noteInput = document.getElementById('noteInput');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const importFile = document.getElementById('importFile');
+
+    // Stats
+    const last7Btn = document.getElementById('last7');
+    const monthPicker = document.getElementById('monthPicker');
+    const rangeInput = document.getElementById('rangeInput');
+    const modalFrom = document.getElementById('modalFrom');
+    const modalTo = document.getElementById('modalTo');
+    const saveRangeBtn = document.getElementById('saveRangeBtn');
+    const applyRange = document.getElementById('applyRange');
+    const resetRange = document.getElementById('resetRange');
+    const totalAmountEl = document.getElementById('totalAmount');
+    const byCategory = document.getElementById('byCategory');
+    const statsChartCtx = document.getElementById('statsChart');
+
+    // Delete modal
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const delPassword = document.getElementById('delPassword');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    let deleteTargetId = null;
+
+    // Import success modal
+    const importSuccessModal = new bootstrap.Modal(document.getElementById('importSuccessModal'));
+    const importSuccessMsg = document.getElementById('importSuccessMsg');
+
+    // Range modal
+    const rangeModal = new bootstrap.Modal(document.getElementById('rangeModal'));
+
+    // Notification modal setup
+    const notifyModal = new bootstrap.Modal(document.getElementById('notifyModal'));
+    const notifyMessage = document.getElementById('notifyMessage');
+    const notifyIconWrap = document.getElementById('notifyIconWrap');
+    const notifyIcon = document.getElementById('notifyIcon');
+    const notifyBtn = document.getElementById('notifyBtn');
+    
+    // Show notification instead of alert
+    function showNotify(message, type = 'info') {
+      const modalHeader = notifyModal._element.querySelector('.modal-header');
+      let iconPath = '';
+      
+      // Set styles based on type
+      switch(type) {
+        case 'error':
+          modalHeader.className = 'modal-header header-danger';
+          notifyIconWrap.className = 'rounded-circle bg-danger bg-opacity-10 p-2 mt-1';
+          notifyIcon.className = 'bi bi-exclamation-circle text-danger';
+          notifyBtn.className = 'btn btn-sm btn-danger';
+          iconPath = 'M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z';
+          break;
+        case 'warning':
+          modalHeader.className = 'modal-header header-warning';
+          notifyIconWrap.className = 'rounded-circle bg-warning bg-opacity-10 p-2 mt-1';
+          notifyIcon.className = 'bi bi-exclamation-triangle text-warning';
+          notifyBtn.className = 'btn btn-sm btn-warning';
+          iconPath = 'M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z';
+          break;
+        case 'success':
+          modalHeader.className = 'modal-header header-success';
+          notifyIconWrap.className = 'rounded-circle bg-success bg-opacity-10 p-2 mt-1';
+          notifyIcon.className = 'bi bi-check-circle text-success';
+          notifyBtn.className = 'btn btn-sm btn-success';
+          iconPath = 'M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z';
+          break;
+        default: // info
+          modalHeader.className = 'modal-header header-primary';
+          notifyIconWrap.className = 'rounded-circle bg-primary bg-opacity-10 p-2 mt-1';
+          notifyIcon.className = 'bi bi-info-circle text-primary';
+          notifyBtn.className = 'btn btn-sm btn-primary';
+          iconPath = 'M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm-.5-5.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0-5a.5.5 0 0 1 .5-.5h.5v-.5a.5.5 0 0 1 1 0V6h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z';
+      }
+      
+      notifyIcon.innerHTML = `<path d="${iconPath}"/>`;
+      notifyMessage.textContent = message;
+      notifyModal.show();
+      
+      // Auto-hide for success messages
+      if(type === 'success') {
+        setTimeout(() => {
+          try { notifyModal.hide(); } catch(e) {}
+        }, 2000);
+      }
+    }
+
+    let expenses = loadExpenses();
+    let chart = null;
+    let lastStats = loadLastStats();
+
+    // default date
+    dateInput.value = new Date().toISOString().slice(0,10);
+
+    function genId(){
+      // unique id: timestamp + random
+      return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9);
+    }
+
+    function saveExpenses(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses)); }
+    function loadExpenses(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return [];
+        return JSON.parse(raw).map(e=>({...e, amount:+e.amount}));
+      }catch(e){ console.error(e); return []; }
+    }
+
+    function saveLastStats(){ localStorage.setItem(STATS_KEY, JSON.stringify(lastStats||null)); }
+    function loadLastStats(){ try{ const r=localStorage.getItem(STATS_KEY); return r?JSON.parse(r):null;}catch(e){return null;} }
+
+    function renderList(){
+      cardsContainer.innerHTML = '';
+      if(expenses.length===0){
+        cardsContainer.innerHTML = '<div class="col-12"><div class="alert alert-info">কোনো খরচ নেই — নতুন যোগ করুন।</div></div>';
+        return;
+      }
+
+      // Group expenses by date
+      const grouped = {};
+      expenses.slice().forEach(e=>{
+        grouped[e.date] = grouped[e.date] || [];
+        grouped[e.date].push(e);
+      });
+
+      // Render each date group (sorted desc)
+      const dates = Object.keys(grouped).sort((a,b)=> b.localeCompare(a));
+      dates.forEach(date => {
+        const items = grouped[date].slice().reverse(); // latest first
+        const dayTotal = items.reduce((s,i)=> s + (parseFloat(i.amount)||0), 0);
+
+        const col = document.createElement('div');
+        col.className = 'col-12 day-group mb-3';
+
+        // build items HTML
+        let itemsHtml = '<div class="row g-3">';
+        items.forEach(ex => {
+          itemsHtml += `
+            <div class="col-md-6 col-sm-12">
+              <div class="card card-exp p-2">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="mb-1">${escapeHtml(ex.category)} — ৳${ex.amount.toFixed(2)}</h6>
+                    <div class="small-muted">${ex.date} • ${escapeHtml(ex.note||'')}</div>
+                    <div class="small-muted">ID: <code>${ex.id}</code></div>
+                  </div>
+                  <div>
+                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${ex.id}">Del</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        itemsHtml += '</div>';
+
+        col.innerHTML = `
+          <div class="card p-2">
+            <div class="day-header mb-2">
+              <div>
+                <span class="date-title">${date}</span>
+                <span class="small-muted ms-2">(${items.length} items)</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold">Total: ৳${dayTotal.toFixed(2)}</span>
+                <button class="btn btn-sm btn-outline-secondary toggle-day" data-date="${date}" aria-expanded="true">Collapse</button>
+              </div>
+            </div>
+            <div class="day-items">
+              ${itemsHtml}
+            </div>
+          </div>
+        `;
+
+        cardsContainer.appendChild(col);
+      });
+
+      // attach toggle handlers for collapse/expand
+      document.querySelectorAll('.toggle-day').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const parentCard = btn.closest('.card');
+          const itemsDiv = parentCard.querySelector('.day-items');
+          const isCollapsed = btn.classList.toggle('collapsed');
+          if(isCollapsed){
+            itemsDiv.style.display = 'none';
+            btn.textContent = 'Expand';
+            btn.setAttribute('aria-expanded','false');
+          } else {
+            itemsDiv.style.display = '';
+            btn.textContent = 'Collapse';
+            btn.setAttribute('aria-expanded','true');
+          }
+        });
+      });
+
+      // attach delete handlers
+      document.querySelectorAll('.btn-delete').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          deleteTargetId = btn.getAttribute('data-id');
+          delPassword.value = '';
+          deleteModal.show();
+        });
+      });
+    }
+
+    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])); }
+
+    expenseForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const obj = {id: genId(), date: dateInput.value, category: categoryInput.value.trim(), amount: parseFloat(amountInput.value)||0, note: noteInput.value.trim()};
+      expenses.push(obj); saveExpenses(); renderList(); expenseForm.reset(); dateInput.value=new Date().toISOString().slice(0,10);
+    });
+
+    // Import file with duplicate protection
+    importFile.addEventListener('change', async (e)=>{
+      const f = e.target.files[0]; if(!f) return; const name = f.name.toLowerCase();
+      try{
+        if(name.endsWith('.csv')){
+          const text = await f.text(); const parsed = Papa.parse(text, {header:true, skipEmptyLines:true}); handleImportedRows(parsed.data);
+        } else if(name.endsWith('.json')){
+          const text = await f.text(); const parsed = JSON.parse(text);
+          // support object with { expenses: [...], stats: {...} } or plain array
+            if(parsed.expenses && Array.isArray(parsed.expenses)){
+            handleImportedRows(parsed.expenses);
+            if(parsed.stats) { lastStats = parsed.stats; saveLastStats(); showNotify('Stats imported', 'success'); }
+          } else if(Array.isArray(parsed)){
+            handleImportedRows(parsed);
+          } else if(parsed.stats){ 
+            lastStats = parsed.stats; 
+            saveLastStats(); 
+            showNotify('Stats data imported successfully', 'success');
+          } else { 
+            showNotify('Unsupported JSON format. Please check the file structure.', 'error');
+          }
+        } else if(name.endsWith('.xlsx')||name.endsWith('.xls')){
+          const arr = await f.arrayBuffer(); const wb = XLSX.read(arr,{type:'array'}); const first = wb.SheetNames[0]; const data = XLSX.utils.sheet_to_json(wb.Sheets[first], {raw:false}); handleImportedRows(data);
+        } else {
+          showNotify('Please select a supported file type (CSV, XLSX, or JSON)', 'warning');
+        }
+      }catch(err){ 
+        console.error(err); 
+        showNotify('Import failed: ' + err.message, 'error');
+      }
+      importFile.value = '';
+    });
+
+    function handleImportedRows(rows){
+      // Expect rows with keys: id?, date, category, amount, note
+      const added = [];
+      rows.forEach(r=>{
+        const lower = {}; for(const k in r) lower[k.toLowerCase().trim()] = r[k];
+        const id = (lower.id && String(lower.id).trim()) || genId();
+        // skip if id exists
+        if(expenses.find(x=>x.id===id)) return;
+        const obj = {id, date: (String(lower.date||new Date().toISOString().slice(0,10))).slice(0,10), category: lower.category||lower.cat||'Unknown', amount: parseFloat(lower.amount||lower.amt||0)||0, note: lower.note||''};
+        expenses.push(obj); added.push(obj);
+      });
+      saveExpenses(); 
+      renderList(); 
+      
+      // Show styled success modal
+      importSuccessMsg.textContent = `Imported ${added.length} new rows (duplicates skipped)`;
+      importSuccessModal.show();
+      // Auto-hide after 2.5 seconds
+      setTimeout(() => {
+        try { importSuccessModal.hide(); } catch(e) {}
+      }, 2500);
+    }
+
+    // Export helpers
+    function getTimestamp(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      const ss = String(d.getSeconds()).padStart(2,'0');
+      return `${y}${m}${day}_${hh}${mm}${ss}`;
+    }
+
+    function exportCsv(){
+      if(expenses.length===0){ 
+        showNotify('No data available to export', 'warning');
+        return; 
+      }
+      const rows = expenses.map(e=>({id:e.id,date:e.date, category:e.category, amount:e.amount, note:e.note}));
+      const csv = Papa.unparse(rows);
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      saveAs(blob, `expenses_${getTimestamp()}.csv`);
+    }
+
+    function exportJson(){
+      const payload = {expenses, stats: lastStats||null};
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      saveAs(blob, `expenses_${getTimestamp()}.json`);
+    }
+
+    function exportXlsx(){
+      const ws = XLSX.utils.json_to_sheet(expenses.map(e=>({id:e.id,date:e.date,category:e.category,amount:e.amount,note:e.note}))); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Expenses'); const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+      saveAs(new Blob([wbout],{type:'application/octet-stream'}), `expenses_${getTimestamp()}.xlsx`);
+    }
+
+    async function exportPdf(){
+      if(expenses.length===0){ showNotify('No data available to export', 'warning'); return; }
+      const { jsPDF } = window.jspdf; const doc = new jsPDF(); const rows = expenses.map(e=>[e.date, e.category, e.amount.toFixed(2), e.note||'', e.id]);
+      doc.autoTable({ head:[['Date','Category','Amount','Note','ID']], body:rows, startY:10 }); doc.text('Expenses Export',14,8);
+      const blob = doc.output('blob'); saveAs(blob,`expenses_${getTimestamp()}.pdf`);
+    }
+
+    // Export zip: CSV, JSON, XLSX, PDF + stats.json
+    async function exportZip(){
+      if(expenses.length===0){ showNotify('No data available to export', 'warning'); return; }
+      const zip = new JSZip();
+      zip.file('expenses.csv', Papa.unparse(expenses.map(e=>({id:e.id,date:e.date,category:e.category,amount:e.amount,note:e.note}))));
+      zip.file('expenses.json', JSON.stringify({expenses, stats: lastStats||null}, null,2));
+      const ws = XLSX.utils.json_to_sheet(expenses.map(e=>({id:e.id,date:e.date,category:e.category,amount:e.amount,note:e.note}))); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Expenses'); const xlsxArr = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+      zip.file('expenses.xlsx', xlsxArr);
+      const { jsPDF } = window.jspdf; const doc = new jsPDF(); const rows = expenses.map(e=>[e.date,e.category,e.amount.toFixed(2),e.note||'',e.id]); doc.autoTable({ head:[['Date','Category','Amount','Note','ID']], body:rows, startY:10 }); doc.text('Expenses Export',14,8); const pdfBlob = doc.output('arraybuffer'); zip.file('expenses.pdf', pdfBlob);
+      // stats file
+      zip.file('stats.json', JSON.stringify(lastStats||{note:'no-stats'}, null,2));
+      const content = await zip.generateAsync({type:'blob'});
+      saveAs(content, `expenses_all_${getTimestamp()}.zip`);
+    }
+
+    // Stats calculation
+    function applyStats(range){
+      let subset = expenses.slice();
+      if(range){ const {from,to} = range; subset = subset.filter(e=> e.date >= from && e.date <= to); }
+      const total = subset.reduce((s,a)=>s + (parseFloat(a.amount)||0),0);
+      totalAmountEl.textContent = 'Total: ৳'+total.toFixed(2);
+
+      // Decide grouping key: category (default) or note (when swapped)
+      const groupByNote = !!(settings && settings.swapCategoryNote);
+      const groupMap = {};
+      subset.forEach(e=>{
+        const key = groupByNote ? (e.note || '(No note)') : (e.category || '(No category)');
+        groupMap[key] = (groupMap[key]||0) + (parseFloat(e.amount)||0);
+      });
+
+      const headerLabel = groupByNote ? 'By note' : 'By category';
+      byCategory.innerHTML = `<h6>${headerLabel}</h6>` + Object.keys(groupMap).map(k=>`<div>${escapeHtml(k)}: ৳${groupMap[k].toFixed(2)}</div>`).join('');
+
+      const labels = Object.keys(groupMap);
+      const data = Object.values(groupMap);
+      if(chart) chart.destroy();
+      chart = new Chart(statsChartCtx, {type:'bar', data:{labels, datasets:[{label:'Amount', data}]}, options:{responsive:true, maintainAspectRatio:false}});
+
+      // store lastStats for export/import and note how it was grouped
+      lastStats = {range: range||null, generatedAt: new Date().toISOString(), total: total, byCategory: groupMap, groupedBy: groupByNote ? 'note' : 'category'};
+      saveLastStats();
+    }
+
+    last7Btn.addEventListener('click', ()=>{
+      const to = new Date(); const from = new Date(); from.setDate(to.getDate()-6);
+      const fromStr = from.toISOString().slice(0,10); const toStr = to.toISOString().slice(0,10);
+      rangeInput.value = `${fromStr} — ${toStr}`; applyStats({from:fromStr, to:toStr});
+    });
+
+    // Range modal interactions
+    rangeInput.addEventListener('click', ()=>{
+      // open modal and prefill
+      if(lastStats && lastStats.range){ modalFrom.value = lastStats.range.from; modalTo.value = lastStats.range.to; }
+      rangeModal.show();
+    });
+    saveRangeBtn.addEventListener('click', ()=>{
+      if(!modalFrom.value || !modalTo.value){ 
+        showNotify('Please select both From and To dates', 'warning');
+        return; 
+      }
+      if(modalFrom.value > modalTo.value){ 
+        showNotify('From date must be before To date', 'error');
+        return; 
+      }
+      rangeInput.value = `${modalFrom.value} — ${modalTo.value}`;
+      rangeModal.hide();
+    });
+
+    applyRange.addEventListener('click', ()=>{
+      if(monthPicker.value){ const [y,m] = monthPicker.value.split('-'); const from = y+'-'+m+'-01'; const to = new Date(y, parseInt(m), 0).toISOString().slice(0,10); applyStats({from,to}); return; }
+      if(rangeInput.value){ 
+        const parts = rangeInput.value.split('—').map(s=>s.trim()); 
+        if(parts.length===2) {
+          applyStats({from:parts[0], to:parts[1]});
+        } else {
+          showNotify('Invalid date range format', 'error');
+        }
+        return; 
+      }
+      showNotify('Please select either a month or a custom date range', 'warning');
+    });
+
+    resetRange.addEventListener('click', ()=>{ totalAmountEl.textContent='Total: ৳0'; byCategory.innerHTML=''; if(chart) chart.destroy(); chart=null; monthPicker.value=''; rangeInput.value=''; lastStats=null; saveLastStats(); });
+
+    // Buttons
+    document.getElementById('exportCsv').addEventListener('click', exportCsv);
+    document.getElementById('exportJson').addEventListener('click', exportJson);
+    document.getElementById('exportXlsx').addEventListener('click', exportXlsx);
+    document.getElementById('exportPdf').addEventListener('click', exportPdf);
+    document.getElementById('exportAllBtn').addEventListener('click', exportZip);
+    document.getElementById('importBtn').addEventListener('click', ()=>importFile.click());
+
+    // Delete confirmation
+    confirmDeleteBtn.addEventListener('click', ()=>{
+      const val = delPassword.value.trim();
+      if(val !== '123'){ 
+        showNotify('Incorrect password, please try again', 'error');
+        return; 
+      }
+      if(!deleteTargetId){ 
+        showNotify('No item selected for deletion', 'error');
+        return; 
+      }
+      const idx = expenses.findIndex(x=>x.id===deleteTargetId);
+      if(idx>=0){ expenses.splice(idx,1); saveExpenses(); renderList(); }
+      deleteTargetId = null; deleteModal.hide();
+    });
+
+        // Pagination state
+    let currentPage = 1;
+    let itemsPerPage = 1; // 1 month per page
+    
+        // Settings state
+        const SETTINGS_KEY = 'expense_settings';
+        let settings = loadSettings();
+    
+        function loadSettings() {
+          try {
+            const raw = localStorage.getItem(SETTINGS_KEY);
+            return raw ? JSON.parse(raw) : { swapCategoryNote: false, theme: 'light' };
+          } catch(e) {
+            return { swapCategoryNote: false, theme: 'light' };
+          }
+        }
+    
+        function saveSettings() {
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        }
+
+        // Apply theme by toggling body class
+        function applyTheme(theme){
+          document.body.classList.remove('theme-light','theme-dark');
+          document.body.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light');
+        }
+    
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    }
+
+    function renderPagination(dates) {
+      const monthGroups = {};
+      dates.forEach(date => {
+        const yearMonth = date.substring(0, 7); // YYYY-MM format
+        if (!monthGroups[yearMonth]) {
+          monthGroups[yearMonth] = [];
+        }
+        monthGroups[yearMonth].push(date);
+      });
+
+      const totalPages = Object.keys(monthGroups).length;
+      const paginationHtml = `
+        <nav aria-label="Page navigation" class="my-3">
+          <ul class="pagination justify-content-center">
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+              <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link">Page ${currentPage} of ${totalPages}</span>
+            </li>
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+              <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+            </li>
+          </ul>
+        </nav>
+      `;
+
+      const paginationContainer = document.createElement('div');
+      paginationContainer.innerHTML = paginationHtml;
+      cardsContainer.insertAdjacentElement('afterbegin', paginationContainer);
+
+      // Attach pagination click handlers
+      paginationContainer.querySelectorAll('.page-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const newPage = parseInt(link.getAttribute('data-page'));
+          if (!isNaN(newPage) && newPage >= 1 && newPage <= totalPages) {
+            currentPage = newPage;
+            renderList();
+          }
+        });
+      });
+
+      return monthGroups;
+    }
+
+    function renderList() {
+      cardsContainer.innerHTML = '';
+      if (expenses.length === 0) {
+        cardsContainer.innerHTML = '<div class="col-12"><div class="alert alert-info">কোনো খরচ নেই — নতুন যোগ করুন।</div></div>';
+        return;
+      }
+
+      // Group expenses by date
+      const grouped = {};
+      expenses.slice().forEach(e => {
+        grouped[e.date] = grouped[e.date] || [];
+        grouped[e.date].push(e);
+      });
+
+      // Get sorted dates
+      const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+      
+      // Create month groups and render pagination
+      const monthGroups = renderPagination(dates);
+      const monthDates = Object.values(monthGroups)[currentPage - 1] || [];
+
+      // Render only the current month's dates
+      monthDates.forEach(date => {
+        const items = grouped[date].slice().reverse(); // latest first
+        const dayTotal = items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+
+        const col = document.createElement('div');
+        col.className = 'col-12 day-group mb-3';
+
+        // build items HTML
+        let itemsHtml = '<div class="row g-3">';
+        items.forEach(ex => {
+          itemsHtml += `
+            <div class="col-md-6 col-sm-12">
+              <div class="card card-exp p-2">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="mb-1">${settings.swapCategoryNote ? escapeHtml(ex.note || 'No Note') : escapeHtml(ex.category)} — ৳${ex.amount.toFixed(2)}</h6>
+                    <div class="small-muted">${formatDate(ex.date)} • ${settings.swapCategoryNote ? escapeHtml(ex.category) : escapeHtml(ex.note || '')}</div>
+                    <div class="small-muted">ID: <code>${ex.id}</code></div>
+                  </div>
+                  <div>
+                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${ex.id}">Del</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        itemsHtml += '</div>';
+
+        col.innerHTML = `
+          <div class="card p-2">
+            <div class="day-header mb-2">
+              <div>
+                <span class="date-title">${formatDate(date)}</span>
+                <span class="small-muted ms-2">(${items.length} items)</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold">Total: ৳${dayTotal.toFixed(2)}</span>
+                <button class="btn btn-sm btn-outline-secondary toggle-day collapsed" data-date="${date}" aria-expanded="false">Expand</button>
+              </div>
+            </div>
+            <div class="day-items" style="display: none;">
+              ${itemsHtml}
+            </div>
+          </div>
+        `;
+
+        cardsContainer.appendChild(col);
+      });
+
+      // attach toggle handlers for collapse/expand
+      document.querySelectorAll('.toggle-day').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const parentCard = btn.closest('.card');
+          const itemsDiv = parentCard.querySelector('.day-items');
+          const isCollapsed = btn.classList.toggle('collapsed');
+          if (isCollapsed) {
+            itemsDiv.style.display = 'none';
+            btn.textContent = 'Expand';
+            btn.setAttribute('aria-expanded', 'false');
+          } else {
+            itemsDiv.style.display = '';
+            btn.textContent = 'Collapse';
+            btn.setAttribute('aria-expanded', 'true');
+          }
+        });
+      });
+
+      // attach delete handlers
+      document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          deleteTargetId = btn.getAttribute('data-id');
+          delPassword.value = '';
+          deleteModal.show();
+        });
+      });
+    }
+
+    // initial render
+    renderList();
+
+    // load existing lastStats into UI if present
+    if (lastStats && lastStats.range) { rangeInput.value = `${lastStats.range.from} — ${lastStats.range.to}`; }
+
+    // Initialize settings UI and handlers
+    const swapCategoryNoteToggle = document.getElementById('swapCategoryNote');
+    swapCategoryNoteToggle.checked = settings.swapCategoryNote;
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    // apply initial theme from settings
+    applyTheme(settings.theme || 'light');
+    if(themeToggle) themeToggle.checked = (settings.theme === 'dark');
+    
+    swapCategoryNoteToggle.addEventListener('change', () => {
+      settings.swapCategoryNote = swapCategoryNoteToggle.checked;
+      saveSettings();
+      renderList(); // Re-render the list with new display settings
+      // If user previously ran stats (lastStats.range exists), reapply stats with the same range
+      if(lastStats && lastStats.range){
+        applyStats(lastStats.range);
+      }
+    });
+
+    if(themeToggle){
+      themeToggle.addEventListener('change', ()=>{
+        settings.theme = themeToggle.checked ? 'dark' : 'light';
+        saveSettings();
+        applyTheme(settings.theme);
+      });
+    }
+
+    // Clear app data flow
+    const clearAppBtn = document.getElementById('clearAppBtn');
+    const exportBeforeClearBtn = document.getElementById('exportBeforeClear');
+    const clearModalEl = document.getElementById('clearModal');
+    const clearModal = new bootstrap.Modal(clearModalEl);
+    const clearConfirmInput = document.getElementById('clearConfirmInput');
+    const confirmClearBtn = document.getElementById('confirmClearBtn');
+
+    // Success modal instance
+    const successModalEl = document.getElementById('successModal');
+    const successModal = new bootstrap.Modal(successModalEl);
+
+    // enable confirm button only when user types CLEAR
+    clearConfirmInput.addEventListener('input', ()=>{
+      confirmClearBtn.disabled = clearConfirmInput.value.trim().toUpperCase() !== 'CLEAR';
+    });
+
+    // open modal
+    clearAppBtn.addEventListener('click', ()=>{
+      clearConfirmInput.value = '';
+      confirmClearBtn.disabled = true;
+      clearModal.show();
+    });
+
+    // Export before clearing (convenience)
+    exportBeforeClearBtn.addEventListener('click', ()=>{
+      if(expenses.length===0){ 
+        showNotify('No data available to export', 'warning');
+        return; 
+      }
+      exportZip();
+    });
+
+    // Confirm clear: remove known keys and reset in-memory state
+    confirmClearBtn.addEventListener('click', async ()=>{
+      // Remove known keys instead of clearing entire localStorage to avoid removing unrelated entries
+      try{
+        const keysToRemove = [STORAGE_KEY, STATS_KEY, SETTINGS_KEY];
+        keysToRemove.forEach(k=> localStorage.removeItem(k));
+        // Also remove any keys that start with 'expense' or 'expenses' just in case
+        for(let i=localStorage.length-1;i>=0;i--){
+          const k = localStorage.key(i);
+          if(!k) continue;
+          if(k.toLowerCase().startsWith('expense') || k.toLowerCase().startsWith('expenses') || k.toLowerCase().includes('stats')){
+            localStorage.removeItem(k);
+          }
+        }
+
+        // Reset in-memory state
+        expenses = [];
+        lastStats = null;
+        settings = { swapCategoryNote: false };
+        saveSettings(); saveExpenses(); saveLastStats();
+        renderList();
+        clearModal.hide();
+
+        // Show success modal instead of alert and auto-close after 2.5s
+        successModal.show();
+        setTimeout(()=>{
+          try{ successModal.hide(); }catch(e){}
+        }, 2500);
+
+      }catch(err){ 
+        console.error(err); 
+        showNotify('Failed to clear data: ' + err.message, 'error');
+      }
+    });
+
+  </script>
+</body>
+</html>
